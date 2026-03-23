@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vòng Quay May Mắn - Quản Lý</title>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+  <div class="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-content">
+        <h1 class="logo-text">🎰 Vòng Quay May Mắn</h1>
+        <p class="subtitle">Tạo và quản lý vòng quay trúng thưởng dễ dàng</p>
+      </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Actions -->
+      <div class="actions-bar">
+        <button class="btn btn-primary btn-glow" onclick="openWizard()">
+          ✨ Tạo Vòng Quay Mới
+        </button>
+        <button class="btn btn-secondary" onclick="createDemo()">
+          🎮 Xem Demo
+        </button>
+      </div>
+
+      <!-- Wheels Grid -->
+      <div class="wheels-grid" id="wheelsGrid">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🎡</div>
+          <h3>Chưa có vòng quay nào</h3>
+          <p>Bấm "Tạo Vòng Quay Mới" để bắt đầu!</p>
+        </div>
+      </div>
+    </main>
+
+    <!-- Wizard Modal -->
+    <div class="modal-overlay" id="wizardModal">
+      <div class="modal wizard-modal">
+        <button class="modal-close" onclick="closeWizard()">&times;</button>
+
+        <!-- Progress Bar -->
+        <div class="wizard-progress">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+          <div class="steps-indicator">
+            <span class="step-dot active" data-step="1">1</span>
+            <span class="step-dot" data-step="2">2</span>
+            <span class="step-dot" data-step="3">3</span>
+            <span class="step-dot" data-step="4">4</span>
+          </div>
+        </div>
+
+        <!-- Step 1: Info -->
+        <div class="wizard-step active" id="step1">
+          <h2>📋 Thông tin chương trình</h2>
+          <div class="form-group">
+            <label>Tên chương trình <span class="required">*</span></label>
+            <input type="text" id="wheelName" placeholder="VD: Vòng Quay Tết 2025" maxlength="100">
+          </div>
+          <div class="form-group">
+            <label>Mô tả ngắn</label>
+            <input type="text" id="wheelDesc" placeholder="VD: Quay và nhận quà siêu hấp dẫn!" maxlength="200">
+          </div>
+          <div class="form-group">
+            <label>Logo URL (tuỳ chọn)</label>
+            <input type="text" id="wheelLogo" placeholder="https://example.com/logo.png">
+          </div>
+          <div class="wizard-nav">
+            <div></div>
+            <button class="btn btn-primary" onclick="nextStep(2)">Tiếp theo →</button>
+          </div>
+        </div>
+
+        <!-- Step 2: Items -->
+        <div class="wizard-step" id="step2">
+          <h2>🎁 Thêm phần thưởng</h2>
+          <div class="percentage-counter" id="percentCounter">
+            Đã dùng: <span id="totalPercent">0</span>% / 100%
+          </div>
+          <div class="items-list" id="itemsList">
+            <!-- Dynamic items here -->
+          </div>
+          <button class="btn btn-outline" onclick="addItem()" id="addItemBtn">+ Thêm phần thưởng</button>
+          <div class="wizard-nav">
+            <button class="btn btn-ghost" onclick="prevStep(1)">← Quay lại</button>
+            <button class="btn btn-primary" onclick="nextStep(3)">Tiếp theo →</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Settings -->
+        <div class="wizard-step" id="step3">
+          <h2>⚙️ Cài đặt nâng cao</h2>
+          <div class="settings-grid">
+            <div class="form-group">
+              <label>Số lượt quay tối đa / thiết bị</label>
+              <input type="number" id="maxSpins" min="0" placeholder="Để trống = không giới hạn">
+              <small>Để trống hoặc 0 = quay không giới hạn</small>
+            </div>
+            <div class="form-group">
+              <label>Thời gian quay</label>
+              <select id="spinDuration">
+                <option value="5">5 giây</option>
+                <option value="8" selected>8 giây</option>
+                <option value="10">10 giây</option>
+              </select>
+            </div>
+            <div class="form-group checkbox-group">
+              <label><input type="checkbox" id="allowRespin" checked> Cho phép quay lại sau khi trúng</label>
+            </div>
+            <div class="form-group checkbox-group">
+              <label><input type="checkbox" id="enableSound" checked> Bật âm thanh</label>
+            </div>
+            <div class="form-group">
+              <label>Màu nền vòng quay</label>
+              <div class="color-row">
+                <input type="color" id="bgColor1" value="#1a1a2e">
+                <span>→</span>
+                <input type="color" id="bgColor2" value="#16213e">
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Tin nhắn chúc mừng</label>
+              <input type="text" id="winMessage" placeholder="🎉 Chúc mừng bạn đã trúng!" value="🎉 Chúc mừng bạn đã trúng!">
+            </div>
+            <div class="form-group">
+              <label>Thời gian kết thúc (tuỳ chọn)</label>
+              <input type="datetime-local" id="endTime">
+              <small>Để trống = không giới hạn thời gian</small>
+            </div>
+          </div>
+          <div class="wizard-nav">
+            <button class="btn btn-ghost" onclick="prevStep(2)">← Quay lại</button>
+            <button class="btn btn-primary" onclick="nextStep(4)">Tiếp theo →</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Preview -->
+        <div class="wizard-step" id="step4">
+          <h2>👁️ Xem trước & Tạo</h2>
+          <div class="preview-container">
+            <canvas id="previewCanvas" width="300" height="300"></canvas>
+          </div>
+          <div class="preview-info" id="previewInfo"></div>
+          <div class="wizard-nav">
+            <button class="btn btn-ghost" onclick="prevStep(3)">← Quay lại</button>
+            <button class="btn btn-primary btn-glow btn-large" onclick="createWheel()" id="createBtn">
+              ✨ TẠO VÒNG QUAY
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Stats Modal -->
+    <div class="modal-overlay" id="statsModal">
+      <div class="modal stats-modal">
+        <button class="modal-close" onclick="closeStats()">&times;</button>
+        <h2>📊 Thống kê vòng quay</h2>
+        <div id="statsContent"></div>
+      </div>
+    </div>
+
+    <!-- QR Modal -->
+    <div class="modal-overlay" id="qrModal">
+      <div class="modal qr-modal">
+        <button class="modal-close" onclick="closeQR()">&times;</button>
+        <h2>📱 QR Code</h2>
+        <div id="qrContent" class="qr-content"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vòng Quay May Mắn</title>
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/spin.css">
+</head>
+<body>
+  <!-- Particles Background -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Floating lights -->
+  <div class="floating-lights">
+    <div class="light light-1"></div>
+    <div class="light light-2"></div>
+    <div class="light light-3"></div>
+  </div>
+
+  <!-- Countdown Timer -->
+  <div class="countdown-bar" id="countdownBar" style="display:none;">
+    <span>⏰ Kết thúc sau: <strong id="countdownTimer"></strong></span>
+  </div>
+
+  <div class="spin-app">
+    <!-- Header -->
+    <div class="spin-header">
+      <img id="spinLogo" class="spin-logo" src="" alt="" style="display:none;">
+      <h1 class="spin-title" id="spinTitle">Vòng Quay May Mắn</h1>
+      <p class="spin-desc" id="spinDesc"></p>
+    </div>
+
+    <!-- Wheel Container -->
+    <div class="wheel-wrapper">
+      <div class="wheel-outer-glow" id="outerGlow"></div>
+      <div class="wheel-pointer-wrapper">
+        <svg class="wheel-pointer-svg" viewBox="0 0 60 50" width="60" height="50">
+          <defs>
+            <linearGradient id="pointerGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" style="stop-color:#ff3b30"/>
+              <stop offset="100%" style="stop-color:#cc0000"/>
+            </linearGradient>
+            <filter id="pointerShadow">
+              <feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#ff3b30" flood-opacity="0.6"/>
+            </filter>
+          </defs>
+          <polygon points="30,45 10,5 50,5" fill="url(#pointerGrad)" filter="url(#pointerShadow)" stroke="#ffd700" stroke-width="2"/>
+          <circle cx="30" cy="12" r="5" fill="#ffd700"/>
+        </svg>
+      </div>
+      <div class="wheel-container" id="wheelContainer">
+        <canvas id="wheelCanvas" width="500" height="500"></canvas>
+      </div>
+    </div>
+
+    <!-- Spin Button -->
+    <button class="spin-btn" id="spinBtn" onclick="startSpin()">
+      <span class="spin-btn-icon">🎰</span>
+      <span class="spin-btn-text">QUAY NGAY!</span>
+    </button>
+
+    <!-- Spin Counter -->
+    <div class="spin-counter" id="spinCounter" style="display:none;">
+      Lượt quay còn lại: <strong id="spinsLeft">0</strong> / <span id="spinsTotal">0</span>
+    </div>
+  </div>
+
+  <!-- Win Popup -->
+  <div class="popup-overlay" id="winPopup">
+    <div class="popup-content">
+      <div class="confetti-container" id="confettiContainer"></div>
+      <div class="popup-sparkle"></div>
+      <h2 class="popup-title" id="popupTitle">🎉 CHÚC MỪNG! 🎉</h2>
+      <p class="popup-subtitle">Bạn đã trúng:</p>
+      <div class="popup-prize-wrapper">
+        <div class="popup-prize" id="popupPrize">🎁 Phần thưởng</div>
+      </div>
+      <p class="popup-message" id="popupMessage"></p>
+
+      <!-- Hướng dẫn nhận thưởng -->
+      <div class="claim-guide">
+        <h3 class="claim-title">📋 Hướng dẫn nhận thưởng</h3>
+        <div class="claim-methods">
+          <div class="claim-method">
+            <div class="claim-icon">🏪</div>
+            <div class="claim-info">
+              <strong>Khách tại cửa hàng</strong>
+              <p>Đưa màn hình này cho nhân viên để nhận thưởng</p>
+            </div>
+          </div>
+          <div class="claim-divider"></div>
+          <div class="claim-method">
+            <div class="claim-icon">📱</div>
+            <div class="claim-info">
+              <strong>Khách mua online</strong>
+              <p>Chụp màn hình kết quả và gửi qua nhóm Zalo đặt hàng</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="popup-actions">
+        <button class="btn btn-respin" id="respinBtn" onclick="closePopupAndRespin()">🔄 QUAY LẠI</button>
+        <button class="btn btn-close-popup" onclick="closePopup()">ĐÓNG</button>
+      </div>
+      <p class="no-spins-msg" id="noSpinsMsg" style="display:none;">
+        😔 Bạn đã hết lượt quay hôm nay!
+      </p>
+    </div>
+  </div>
+
+  <!-- Error State -->
+  <div class="error-state" id="errorState" style="display:none;">
+    <h2>😕 Không tìm thấy vòng quay</h2>
+    <p>Vòng quay này không tồn tại hoặc đã bị xoá.</p>
+    <a href="/" class="btn btn-primary">← Về trang chủ</a>
+  </div>
+
+  <script src="/js/spin.js"></script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "additionalDirectories": [
+      "/Users/man/Downloads/VS/VONG QUAY"
+    ],
+    "allow": [
+      "Bash(node -e \"const app = require\\(''./server''\\); console.log\\(''✅ server.js OK''\\)\")"
+    ]
+  }
+}
