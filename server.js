@@ -3,6 +3,8 @@ const cors = require('cors');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const QRCode = require('qrcode');
+const jwt = require('jsonwebtoken');
+const cookieParser = require('cookie-parser');
 
 // Load .env khi chạy local
 if (process.env.NODE_ENV !== 'production') {
@@ -11,30 +13,87 @@ if (process.env.NODE_ENV !== 'production') {
 
 const { getDb } = require('./lib/db');
 
+// === Cấu hình Auth ===
+const JWT_SECRET   = process.env.JWT_SECRET   || 'vongquay-jwt-2025-secret';
+const ADMIN_USER   = process.env.ADMIN_USER   || '0918100192';
+const ADMIN_PASS   = process.env.ADMIN_PASS   || 'Tt17072021@@';
+
 const app = express();
 
 // Middleware
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
-// --- Routes tĩnh ---
-app.get('/', (req, res) => {
+// === Auth Middleware ===
+function requireAuth(req, res, next) {
+  const token = req.cookies?.admin_token;
+  if (!token) {
+    if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Chưa đăng nhập' });
+    return res.redirect('/login');
+  }
+  try {
+    jwt.verify(token, JWT_SECRET);
+    next();
+  } catch {
+    res.clearCookie('admin_token');
+    if (req.path.startsWith('/api/')) return res.status(401).json({ error: 'Phiên đăng nhập hết hạn' });
+    res.redirect('/login');
+  }
+}
+
+// === Routes tĩnh ===
+
+// Trang login (public)
+app.get('/login', (req, res) => {
+  const token = req.cookies?.admin_token;
+  if (token) {
+    try { jwt.verify(token, JWT_SECRET); return res.redirect('/'); } catch {}
+  }
+  res.sendFile(path.join(__dirname, 'public', 'login.html'));
+});
+
+// Trang chủ admin (bảo vệ)
+app.get('/', requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Trang quay (PUBLIC - khách truy cập qua QR)
 app.get('/spin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'spin.html'));
 });
 
-app.get('/admin/winners', (req, res) => {
+app.get('/admin/winners', requireAuth, (_req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'spin.html'));
 });
 
-// --- API ---
+// === Auth API ===
+
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    const token = jwt.sign({ admin: true }, JWT_SECRET, { expiresIn: '7d' });
+    res.cookie('admin_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+    });
+    return res.json({ success: true });
+  }
+  res.status(401).json({ error: 'Sai tài khoản hoặc mật khẩu' });
+});
+
+app.post('/api/logout', (_req, res) => {
+  res.clearCookie('admin_token');
+  res.json({ success: true });
+});
+
+// === API (Protected) ===
 
 // Lấy tất cả vòng quay
-app.get('/api/wheels', async (req, res) => {
+app.get('/api/wheels', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const wheels = await db.collection('wheels')
@@ -48,7 +107,7 @@ app.get('/api/wheels', async (req, res) => {
 });
 
 // Tạo vòng quay
-app.post('/api/wheels', async (req, res) => {
+app.post('/api/wheels', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const wheel = {
@@ -71,7 +130,7 @@ app.post('/api/wheels', async (req, res) => {
   }
 });
 
-// Lấy một vòng quay
+// Lấy một vòng quay (PUBLIC - spin page cần)
 app.get('/api/wheels/:id', async (req, res) => {
   try {
     const db = await getDb();
@@ -88,19 +147,19 @@ app.get('/api/wheels/:id', async (req, res) => {
 });
 
 // Cập nhật vòng quay
-app.put('/api/wheels/:id', async (req, res) => {
+app.put('/api/wheels/:id', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const existing = await db.collection('wheels').findOne({ id: req.params.id });
     if (!existing) return res.status(404).json({ error: 'Không tìm thấy vòng quay' });
 
     const update = {
-      name: req.body.name ?? existing.name,
+      name:        req.body.name        ?? existing.name,
       description: req.body.description ?? existing.description,
-      logo: req.body.logo ?? existing.logo,
-      items: req.body.items ?? existing.items,
-      settings: req.body.settings ?? existing.settings,
-      active: req.body.active ?? existing.active
+      logo:        req.body.logo        ?? existing.logo,
+      items:       req.body.items       ?? existing.items,
+      settings:    req.body.settings    ?? existing.settings,
+      active:      req.body.active      ?? existing.active
     };
     await db.collection('wheels').updateOne({ id: req.params.id }, { $set: update });
     res.json({ success: true, wheel: { ...update, id: req.params.id } });
@@ -111,7 +170,7 @@ app.put('/api/wheels/:id', async (req, res) => {
 });
 
 // Xoá vòng quay
-app.delete('/api/wheels/:id', async (req, res) => {
+app.delete('/api/wheels/:id', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const result = await db.collection('wheels').deleteOne({ id: req.params.id });
@@ -123,7 +182,7 @@ app.delete('/api/wheels/:id', async (req, res) => {
   }
 });
 
-// Ghi kết quả quay
+// Ghi kết quả quay (PUBLIC - spin page cần)
 app.post('/api/spin-result', async (req, res) => {
   try {
     const { wheelId, result, timestamp, deviceId } = req.body;
@@ -145,7 +204,7 @@ app.post('/api/spin-result', async (req, res) => {
 });
 
 // Thống kê
-app.get('/api/wheels/:id/stats', async (req, res) => {
+app.get('/api/wheels/:id/stats', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const wheel = await db.collection('wheels').findOne({ id: req.params.id });
@@ -180,7 +239,7 @@ app.get('/api/wheels/:id/stats', async (req, res) => {
 });
 
 // Reset thống kê
-app.post('/api/wheels/:id/reset-stats', async (req, res) => {
+app.post('/api/wheels/:id/reset-stats', requireAuth, async (req, res) => {
   try {
     const db = await getDb();
     const result = await db.collection('wheels').updateOne(
@@ -195,7 +254,7 @@ app.post('/api/wheels/:id/reset-stats', async (req, res) => {
   }
 });
 
-// Tạo QR Code
+// Tạo QR Code (PUBLIC)
 app.get('/api/qrcode/:id', async (req, res) => {
   try {
     const url = `${req.protocol}://${req.get('host')}/spin?id=${req.params.id}`;

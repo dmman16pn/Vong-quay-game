@@ -37,6 +37,36 @@ body {
   font-weight: 300;
 }
 
+/* === LOGOUT BUTTON === */
+.header {
+  position: relative;
+}
+
+.btn-logout {
+  position: absolute;
+  top: 20px;
+  right: 24px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.07);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  color: rgba(255,255,255,0.6);
+  font-family: 'Be Vietnam Pro', 'Segoe UI', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-logout:hover {
+  background: rgba(255,59,48,0.15);
+  border-color: rgba(255,59,48,0.3);
+  color: #ff3b30;
+}
+
 /* === ACTIONS BAR === */
 .actions-bar {
   display: flex;

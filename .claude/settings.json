@@ -6,7 +6,8 @@
       "Bash(docker --version)",
       "Bash(docker compose:*)",
       "Bash(gh repo:*)",
-      "Bash(make deploy:*)"
+      "Bash(make deploy:*)",
+      "Bash(node -e \"require\\(''./server''\\); console.log\\(''✅ OK''\\)\")"
     ],
     "additionalDirectories": [
       "/Users/man/Downloads/VS/VONG QUAY"

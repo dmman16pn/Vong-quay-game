@@ -6,6 +6,21 @@ const API = '';
 let currentStep = 1;
 let editingWheelId = null;
 
+// === AUTH ===
+async function authFetch(url, options = {}) {
+  const res = await fetch(url, options);
+  if (res.status === 401) {
+    window.location.href = '/login';
+    throw new Error('Unauthorized');
+  }
+  return res;
+}
+
+async function logout() {
+  await fetch('/api/logout', { method: 'POST' });
+  window.location.href = '/login';
+}
+
 const DEFAULT_COLORS = [
   '#ff3b30', '#ff9500', '#ffcc00', '#34c759',
   '#007aff', '#5856d6', '#af52de', '#ff2d55',
@@ -20,11 +35,11 @@ document.addEventListener('DOMContentLoaded', () => {
 // === LOAD WHEELS ===
 async function loadWheels() {
   try {
-    const res = await fetch(`${API}/api/wheels`);
+    const res = await authFetch(`${API}/api/wheels`);
     const wheels = await res.json();
     renderWheels(wheels);
   } catch (err) {
-    console.error('Lỗi tải danh sách:', err);
+    if (err.message !== 'Unauthorized') console.error('Lỗi tải danh sách:', err);
   }
 }
 
@@ -503,13 +518,13 @@ async function createWheel() {
   try {
     let res;
     if (editingWheelId) {
-      res = await fetch(`${API}/api/wheels/${editingWheelId}`, {
+      res = await authFetch(`${API}/api/wheels/${editingWheelId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
       });
     } else {
-      res = await fetch(`${API}/api/wheels`, {
+      res = await authFetch(`${API}/api/wheels`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data)
@@ -545,7 +560,7 @@ function copyLink(id) {
 
 async function editWheel(id) {
   try {
-    const res = await fetch(`${API}/api/wheels/${id}`);
+    const res = await authFetch(`${API}/api/wheels/${id}`);
     const wheel = await res.json();
     if (wheel.error) {
       showToast('❌ Không tìm thấy vòng quay!', '#ff3b30');
@@ -560,7 +575,7 @@ async function editWheel(id) {
 async function deleteWheel(id, name) {
   if (!confirm(`Bạn có chắc muốn xoá "${name}"?`)) return;
   try {
-    const res = await fetch(`${API}/api/wheels/${id}`, { method: 'DELETE' });
+    const res = await authFetch(`${API}/api/wheels/${id}`, { method: 'DELETE' });
     const result = await res.json();
     if (result.success) {
       loadWheels();
@@ -581,8 +596,8 @@ async function showStats(id) {
 
   try {
     const [wheelRes, statsRes] = await Promise.all([
-      fetch(`${API}/api/wheels/${id}`),
-      fetch(`${API}/api/wheels/${id}/stats`)
+      authFetch(`${API}/api/wheels/${id}`),
+      authFetch(`${API}/api/wheels/${id}/stats`)
     ]);
     const wheel = await wheelRes.json();
     const stats = await statsRes.json();
@@ -693,7 +708,7 @@ async function resetStats() {
   if (!currentStatsWheelId) return;
   if (!confirm('⚠️ Reset toàn bộ thống kê vòng quay này?\n\nDữ liệu lịch sử sẽ không thể khôi phục!')) return;
   try {
-    const res = await fetch(`${API}/api/wheels/${currentStatsWheelId}/reset-stats`, { method: 'POST' });
+    const res = await authFetch(`${API}/api/wheels/${currentStatsWheelId}/reset-stats`, { method: 'POST' });
     const result = await res.json();
     if (result.success) {
       showStats(currentStatsWheelId);
@@ -710,7 +725,7 @@ function closeStats() {
 
 async function showQR(id) {
   try {
-    const res = await fetch(`${API}/api/qrcode/${id}`);
+    const res = await authFetch(`${API}/api/qrcode/${id}`);
     const data = await res.json();
     const content = document.getElementById('qrContent');
     content.innerHTML = `
@@ -756,7 +771,7 @@ async function createDemo() {
   };
 
   try {
-    const res = await fetch(`${API}/api/wheels`, {
+    const res = await authFetch(`${API}/api/wheels`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(demoData)
