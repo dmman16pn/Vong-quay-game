@@ -571,50 +571,98 @@ async function deleteWheel(id, name) {
   }
 }
 
-async function showStats(id) {
-  try {
-    const res = await fetch(`${API}/api/wheels/${id}/stats`);
-    const stats = await res.json();
+let currentStatsWheelId = null;
 
-    const content = document.getElementById('statsContent');
+async function showStats(id) {
+  currentStatsWheelId = id;
+  const content = document.getElementById('statsContent');
+  content.innerHTML = '<div style="text-align:center;padding:48px;opacity:0.5">⏳ Đang tải...</div>';
+  document.getElementById('statsModal').classList.add('show');
+
+  try {
+    const [wheelRes, statsRes] = await Promise.all([
+      fetch(`${API}/api/wheels/${id}`),
+      fetch(`${API}/api/wheels/${id}/stats`)
+    ]);
+    const wheel = await wheelRes.json();
+    const stats = await statsRes.json();
+
+    // Map màu từ items của vòng quay
+    const colorMap = {};
+    (wheel.items || []).forEach(item => { colorMap[item.name] = item.color; });
+
     const total = stats.totalSpins;
 
-    let chartHtml = '';
+    // Dải thời gian
+    let dateRangeHtml = '<span style="opacity:0.35">Chưa có lượt quay nào</span>';
+    if (stats.firstSpin) {
+      const first = new Date(stats.firstSpin).toLocaleDateString('vi-VN');
+      const last  = new Date(stats.lastSpin).toLocaleDateString('vi-VN');
+      dateRangeHtml = `<span>📅 ${first === last ? first : first + ' → ' + last}</span>`;
+    }
+
+    // Biểu đồ phần thưởng
+    let chartHtml = '<p style="text-align:center;opacity:0.4;padding:20px 0">Chưa có lượt quay nào</p>';
     if (total > 0) {
       const sorted = Object.entries(stats.resultCounts).sort((a, b) => b[1] - a[1]);
       chartHtml = sorted.map(([name, count]) => {
         const pct = ((count / total) * 100).toFixed(1);
+        const color = colorMap[name] || '#ffd700';
         return `
-          <div class="chart-bar-row">
-            <span class="chart-bar-label">${escHtml(name)}</span>
-            <div class="chart-bar-track">
-              <div class="chart-bar-fill" style="width:${pct}%">${count}</div>
+          <div class="chart-row">
+            <div class="chart-label">
+              <span class="chart-dot" style="background:${color}"></span>
+              <span>${escHtml(name)}</span>
             </div>
+            <div class="chart-track">
+              <div class="chart-fill" style="width:${pct}%;background:linear-gradient(90deg,${color}cc,${color})">${count}</div>
+            </div>
+            <span class="chart-pct">${pct}%</span>
           </div>`;
       }).join('');
     }
 
+    // Lịch sử
     let historyHtml = '';
     if (stats.history && stats.history.length > 0) {
       const rows = stats.history.slice().reverse().slice(0, 50).map(h => {
         const t = new Date(h.timestamp).toLocaleString('vi-VN');
-        return `<tr><td>${t}</td><td>${escHtml(h.result)}</td><td>${h.deviceId?.slice(0, 8) || '?'}…</td></tr>`;
+        const color = colorMap[h.result] || '#ffd700';
+        return `<tr>
+          <td>${t}</td>
+          <td><span class="history-badge" style="border-color:${color}33;color:${color}">${escHtml(h.result)}</span></td>
+          <td class="history-device">${(h.deviceId || '?').slice(0, 10)}…</td>
+        </tr>`;
       }).join('');
       historyHtml = `
-        <div class="stats-history">
-          <h3 style="margin-bottom:8px; color:rgba(255,255,255,0.6); font-size:0.9rem;">Lịch sử gần đây</h3>
-          <table>
-            <thead><tr><th>Thời gian</th><th>Kết quả</th><th>Thiết bị</th></tr></thead>
-            <tbody>${rows}</tbody>
-          </table>
+        <div class="stats-section">
+          <div class="stats-section-title">🕐 Lịch sử gần đây</div>
+          <div class="stats-history">
+            <table>
+              <thead><tr><th>Thời gian</th><th>Phần thưởng</th><th>Thiết bị</th></tr></thead>
+              <tbody>${rows}</tbody>
+            </table>
+          </div>
         </div>`;
     }
 
     content.innerHTML = `
-      <div class="stats-grid">
+      <div class="stats-header">
+        <div>
+          <div class="stats-title">📊 Thống kê</div>
+          <div class="stats-wheel-name">${escHtml(wheel.name)}</div>
+        </div>
+        <button class="btn btn-sm btn-reset-stats" onclick="resetStats()">🔄 Reset</button>
+      </div>
+
+      <div class="stats-grid stats-grid-4">
         <div class="stat-card">
           <div class="stat-value">${total}</div>
-          <div class="stat-label">Tổng lượt quay</div>
+          <div class="stat-label">Tổng lượt</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value">${stats.todayCount || 0}</div>
+          <div class="stat-label">Hôm nay</div>
         </div>
         <div class="stat-card">
           <div class="stat-value">${stats.uniqueDevices}</div>
@@ -625,13 +673,34 @@ async function showStats(id) {
           <div class="stat-label">Loại giải</div>
         </div>
       </div>
-      <div class="stats-chart">${chartHtml || '<p style="text-align:center;opacity:0.5">Chưa có dữ liệu quay</p>'}</div>
+
+      <div class="stats-date-range">${dateRangeHtml}</div>
+
+      <div class="stats-section">
+        <div class="stats-section-title">🏆 Phân bổ phần thưởng</div>
+        <div class="stats-chart-new">${chartHtml}</div>
+      </div>
+
       ${historyHtml}
     `;
-
-    document.getElementById('statsModal').classList.add('show');
   } catch (err) {
+    content.innerHTML = '<div style="text-align:center;padding:40px;color:#ff3b30">❌ Lỗi tải thống kê</div>';
     showToast('❌ Lỗi tải thống kê!', '#ff3b30');
+  }
+}
+
+async function resetStats() {
+  if (!currentStatsWheelId) return;
+  if (!confirm('⚠️ Reset toàn bộ thống kê vòng quay này?\n\nDữ liệu lịch sử sẽ không thể khôi phục!')) return;
+  try {
+    const res = await fetch(`${API}/api/wheels/${currentStatsWheelId}/reset-stats`, { method: 'POST' });
+    const result = await res.json();
+    if (result.success) {
+      showStats(currentStatsWheelId);
+      showToast('✅ Đã reset thống kê!');
+    }
+  } catch (err) {
+    showToast('❌ Lỗi reset!', '#ff3b30');
   }
 }
 

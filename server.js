@@ -155,19 +155,43 @@ app.get('/api/wheels/:id/stats', async (req, res) => {
     const totalSpins = history.length;
     const resultCounts = {};
     const deviceCounts = {};
+    const today = new Date().toISOString().slice(0, 10);
+    let todayCount = 0;
+
     history.forEach(h => {
       resultCounts[h.result] = (resultCounts[h.result] || 0) + 1;
       deviceCounts[h.deviceId] = (deviceCounts[h.deviceId] || 0) + 1;
+      if (h.timestamp && h.timestamp.startsWith(today)) todayCount++;
     });
+
     res.json({
       totalSpins,
       resultCounts,
       uniqueDevices: Object.keys(deviceCounts).length,
+      todayCount,
+      firstSpin: history.length > 0 ? history[0].timestamp : null,
+      lastSpin:  history.length > 0 ? history[history.length - 1].timestamp : null,
       history: history.slice(-100)
     });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Lỗi đọc thống kê' });
+  }
+});
+
+// Reset thống kê
+app.post('/api/wheels/:id/reset-stats', async (req, res) => {
+  try {
+    const db = await getDb();
+    const result = await db.collection('wheels').updateOne(
+      { id: req.params.id },
+      { $set: { history: [] } }
+    );
+    if (result.matchedCount === 0) return res.status(404).json({ error: 'Không tìm thấy vòng quay' });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Lỗi reset thống kê' });
   }
 });
 

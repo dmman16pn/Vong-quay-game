@@ -5,7 +5,8 @@
       "Bash(gh auth:*)",
       "Bash(docker --version)",
       "Bash(docker compose:*)",
-      "Bash(gh repo:*)"
+      "Bash(gh repo:*)",
+      "Bash(make deploy:*)"
     ],
     "additionalDirectories": [
       "/Users/man/Downloads/VS/VONG QUAY"
