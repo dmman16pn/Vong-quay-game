@@ -16,7 +16,8 @@
       "Bash(vercel login:*)",
       "Bash(kill %%)",
       "Bash(vercel whoami:*)",
-      "Bash(make status:*)"
+      "Bash(make status:*)",
+      "Bash(vercel logs:*)"
     ],
     "additionalDirectories": [
       "/Users/man/Downloads/VS/VONG QUAY"

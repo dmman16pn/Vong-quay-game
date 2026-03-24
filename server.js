@@ -24,7 +24,8 @@ const app = express();
 app.use(cors());
 app.use(cookieParser());
 app.use(express.json({ limit: '10mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+// index: false để ngăn express.static tự phục vụ index.html tại '/' (bypass requireAuth)
+app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 // === Auth Middleware ===
 function requireAuth(req, res, next) {
@@ -42,6 +43,17 @@ function requireAuth(req, res, next) {
     res.redirect('/login');
   }
 }
+
+// === Health check (PUBLIC - để debug) ===
+app.get('/api/health', async (_req, res) => {
+  try {
+    const db = await getDb();
+    await db.command({ ping: 1 });
+    res.json({ ok: true, db: 'connected' });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err.message });
+  }
+});
 
 // === Routes tĩnh ===
 
@@ -126,8 +138,8 @@ app.post('/api/wheels', requireAuth, async (req, res) => {
     const { _id, history, ...wheelData } = wheel;
     res.json({ success: true, wheel: wheelData });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Lỗi tạo vòng quay' });
+    console.error('POST /api/wheels error:', err);
+    res.status(500).json({ error: 'Lỗi tạo vòng quay', detail: err.message });
   }
 });
 
