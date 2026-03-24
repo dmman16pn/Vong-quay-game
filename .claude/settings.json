@@ -7,7 +7,16 @@
       "Bash(docker compose:*)",
       "Bash(gh repo:*)",
       "Bash(make deploy:*)",
-      "Bash(node -e \"require\\(''./server''\\); console.log\\(''✅ OK''\\)\")"
+      "Bash(node -e \"require\\(''./server''\\); console.log\\(''✅ OK''\\)\")",
+      "Bash(npm list:*)",
+      "Bash(sudo npm:*)",
+      "Bash(echo \"PATH: $HOME/.npm-global/bin/vercel\")",
+      "Bash(export PATH=\"$HOME/.npm-global/bin:$PATH\")",
+      "Bash(vercel --version)",
+      "Bash(vercel login:*)",
+      "Bash(kill %%)",
+      "Bash(vercel whoami:*)",
+      "Bash(make status:*)"
     ],
     "additionalDirectories": [
       "/Users/man/Downloads/VS/VONG QUAY"
