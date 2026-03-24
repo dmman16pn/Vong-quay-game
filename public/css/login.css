@@ -162,6 +162,34 @@ body {
 
 .toggle-pw:hover { color: rgba(255,255,255,0.8); }
 
+/* === Remember me === */
+.remember-row {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.remember-row input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  accent-color: #ffd700;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.remember-label {
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.65);
+}
+
+.remember-note {
+  color: rgba(255,255,255,0.35);
+  font-size: 0.8rem;
+}
+
 /* === Error === */
 .login-error {
   min-height: 24px;

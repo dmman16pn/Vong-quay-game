@@ -1,10 +1,30 @@
+// Tự điền thông tin đã lưu (Credential Management API)
+document.addEventListener('DOMContentLoaded', async () => {
+  if (window.PasswordCredential && navigator.credentials) {
+    try {
+      const cred = await navigator.credentials.get({
+        password: true,
+        mediation: 'optional'
+      });
+      if (cred) {
+        document.getElementById('username').value = cred.id;
+        document.getElementById('password').value = cred.password;
+      }
+    } catch {}
+  }
+  document.getElementById('username').focus();
+});
+
 async function handleLogin(event) {
   event.preventDefault();
 
-  const btn      = document.getElementById('loginBtn');
-  const btnText  = document.getElementById('loginBtnText');
-  const btnIcon  = document.getElementById('loginBtnIcon');
-  const errorEl  = document.getElementById('loginError');
+  const btn     = document.getElementById('loginBtn');
+  const btnText = document.getElementById('loginBtnText');
+  const btnIcon = document.getElementById('loginBtnIcon');
+  const errorEl = document.getElementById('loginError');
+  const username   = document.getElementById('username').value.trim();
+  const password   = document.getElementById('password').value;
+  const rememberMe = document.getElementById('rememberMe').checked;
 
   btn.disabled = true;
   btnText.textContent = 'Đang đăng nhập...';
@@ -15,15 +35,19 @@ async function handleLogin(event) {
     const res = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        username: document.getElementById('username').value.trim(),
-        password: document.getElementById('password').value
-      })
+      body: JSON.stringify({ username, password, rememberMe })
     });
 
     const data = await res.json();
 
     if (res.ok && data.success) {
+      // Lưu mật khẩu vào trình duyệt (nếu hỗ trợ)
+      if (window.PasswordCredential) {
+        try {
+          const cred = new PasswordCredential({ id: username, password });
+          await navigator.credentials.store(cred);
+        } catch {}
+      }
       btnText.textContent = '✓ Thành công!';
       btnIcon.textContent = '';
       setTimeout(() => { window.location.href = '/'; }, 400);
@@ -40,9 +64,8 @@ async function handleLogin(event) {
 function showError(msg) {
   const el = document.getElementById('loginError');
   el.textContent = msg;
-  // Retrigger animation
   el.style.animation = 'none';
-  el.offsetHeight; // reflow
+  el.offsetHeight;
   el.style.animation = '';
 }
 
@@ -71,8 +94,3 @@ function togglePw() {
   }
   input.focus();
 }
-
-// Focus username on load
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('username').focus();
-});

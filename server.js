@@ -71,14 +71,15 @@ app.get('/admin/winners', requireAuth, (_req, res) => {
 // === Auth API ===
 
 app.post('/api/login', (req, res) => {
-  const { username, password } = req.body;
+  const { username, password, rememberMe } = req.body;
   if (username === ADMIN_USER && password === ADMIN_PASS) {
-    const token = jwt.sign({ admin: true }, JWT_SECRET, { expiresIn: '7d' });
+    const days = rememberMe ? 30 : 1;
+    const token = jwt.sign({ admin: true }, JWT_SECRET, { expiresIn: `${days}d` });
     res.cookie('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+      maxAge: days * 24 * 60 * 60 * 1000
     });
     return res.json({ success: true });
   }
