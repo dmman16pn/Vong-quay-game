@@ -18,6 +18,12 @@ const JWT_SECRET   = process.env.JWT_SECRET   || 'vongquay-jwt-2025-secret';
 const ADMIN_USER   = process.env.ADMIN_USER   || '0918100192';
 const ADMIN_PASS   = process.env.ADMIN_PASS   || 'Tt17072021@@';
 
+// Danh sách tài khoản: admin + nhân viên
+const ACCOUNTS = [
+  { username: ADMIN_USER, password: ADMIN_PASS, role: 'admin' },
+  { username: 'noiboksss@gmail.com', password: 'Ksss123456789@@', role: 'staff' },
+];
+
 const app = express();
 
 // Middleware
@@ -84,16 +90,17 @@ app.get('/admin/winners', requireAuth, (_req, res) => {
 
 app.post('/api/login', (req, res) => {
   const { username, password, rememberMe } = req.body;
-  if (username === ADMIN_USER && password === ADMIN_PASS) {
+  const account = ACCOUNTS.find(a => a.username === username && a.password === password);
+  if (account) {
     const days = rememberMe ? 30 : 1;
-    const token = jwt.sign({ admin: true }, JWT_SECRET, { expiresIn: `${days}d` });
+    const token = jwt.sign({ admin: true, role: account.role }, JWT_SECRET, { expiresIn: `${days}d` });
     res.cookie('admin_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       maxAge: days * 24 * 60 * 60 * 1000
     });
-    return res.json({ success: true });
+    return res.json({ success: true, role: account.role });
   }
   res.status(401).json({ error: 'Sai tài khoản hoặc mật khẩu' });
 });
